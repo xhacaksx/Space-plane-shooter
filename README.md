@@ -26,7 +26,7 @@ A classic arcade-style shooting game built with Python and Pygame where you cont
 1. Clone this repository:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/space-plane-shooter.git
+git clone https://github.com/xhacaksx/space-plane-shooter.git
 cd space-plane-shooter
 ```
 
