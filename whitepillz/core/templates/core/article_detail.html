@@ -1,248 +1,185 @@
-{% extends 'core/base.html' %} {% block content %}
-<div class="row">
-  <div class="col-lg-8">
-    <nav aria-label="breadcrumb" class="mb-4">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-          <a href="{% url 'core:home' %}" class="text-decoration-none">
-            <i class="fas fa-home me-1"></i>Home
-          </a>
-        </li>
-        {% if article.category %}
-        <li class="breadcrumb-item">
-          <a
-            href="{% url 'core:category_list' article.category.slug %}"
-            class="text-decoration-none"
-          >
-            <i class="fas fa-tag me-1"></i>{{ article.category.name }}
-          </a>
-        </li>
-        {% endif %}
-        <li class="breadcrumb-item active" aria-current="page">
-          {{ article.title|truncatechars:40 }}
-        </li>
-      </ol>
-    </nav>
-
-    <article class="card shadow-sm mb-5">
-      <div class="card-body p-4 p-lg-5">
-        <header class="mb-4">
-          <div class="d-flex flex-wrap gap-2 mb-3">
-            <span
-              class="badge bg-{% if article.sentiment == 'positive' %}positive{% elif article.sentiment == 'negative' %}negative{% else %}neutral{% endif %}"
-            >
-              {% if article.sentiment == 'positive' %}
-              <i class="fas fa-plus-circle me-1"></i>
-              {% elif article.sentiment == 'negative' %}
-              <i class="fas fa-minus-circle me-1"></i>
-              {% else %}
-              <i class="fas fa-dot-circle me-1"></i>
-              {% endif %} {{ article.sentiment|title }}
-            </span>
-            {% if article.category %}
-            <span class="badge bg-primary-light text-primary">
-              <i class="fas fa-tag me-1"></i>
-              {{ article.category.name }}
-            </span>
-            {% endif %}
-          </div>
-
-          <h1 class="mb-4">{{ article.title }}</h1>
-
-          <div
-            class="d-flex flex-wrap align-items-center gap-4 mb-4 text-muted small"
-          >
-            <div class="d-flex align-items-center">
-              <i class="far fa-calendar me-2"></i>
-              {{ article.published_at|date:"F d, Y" }}
-            </div>
-            <div class="d-flex align-items-center">
-              <i class="fas fa-newspaper me-2"></i>
-              {{ article.source.name }}
-            </div>
-          </div>
-        </header>
-
-        {% if article.image_url %}
-        <figure class="mb-5">
-          <img
-            class="img-fluid rounded shadow-sm"
-            src="{{ article.image_url }}"
-            alt="{{ article.title }}"
-          />
-        </figure>
-        {% endif %}
-
-        <div class="alert alert-light text-muted mb-4 small">
-          <i class="fas fa-info-circle me-2"></i>
-          This is a preview. For the full article, please visit the original
-          source.
-        </div>
-
-        <div class="article-content mb-5">
-          <p class="lead mb-4">{{ article.content|truncatewords:20 }}</p>
-          <p>{{ article.content }}</p>
-        </div>
-
-        <div
-          class="d-flex justify-content-between align-items-center mt-5 pt-4 border-top"
+{% extends 'core/base.html' %} {% load static %} {% block title %}{{
+article.title }} | WhitePillz{% endblock %} {% block content %}
+<div class="article-detail-container">
+  <div class="article-main">
+    <div class="article-header">
+      <div class="article-meta">
+        <span class="article-source">{{ article.source.name }}</span>
+        <span class="article-date"
+          >{{ article.published_at|date:"F j, Y" }}</span
         >
-          <div>
-            {% if article.category %}
-            <a
-              href="{% url 'core:category_list' article.category.slug %}"
-              class="btn btn-sm btn-outline-secondary"
-            >
-              <i class="fas fa-tag me-1"></i>{{ article.category.name }}
-            </a>
-            {% endif %}
-          </div>
-          <a
-            href="{{ article.url }}"
-            class="btn btn-primary"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <i class="fas fa-external-link-alt me-2"></i>Read Full Article
-          </a>
-        </div>
-      </div>
-    </article>
-  </div>
 
-  <div class="col-lg-4">
-    <div class="card shadow-sm mb-4 sidebar-info">
-      <div class="card-header">
-        <h5 class="mb-0">
-          <i class="fas fa-info-circle me-2"></i>Article Info
-        </h5>
+        {% if article.sentiment == 'positive' %}
+        <span class="sentiment-badge positive">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            fill="currentColor"
+            viewBox="0 0 16 16"
+          >
+            <path
+              d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"
+            />
+            <path
+              d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"
+            />
+          </svg>
+          Positive
+        </span>
+        {% elif article.sentiment == 'negative' %}
+        <span class="sentiment-badge negative">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            fill="currentColor"
+            viewBox="0 0 16 16"
+          >
+            <path
+              d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"
+            />
+            <path
+              d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8z"
+            />
+          </svg>
+          Negative
+        </span>
+        {% else %}
+        <span class="sentiment-badge neutral">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            fill="currentColor"
+            viewBox="0 0 16 16"
+          >
+            <path
+              d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"
+            />
+            <path
+              d="M4.5 9a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5z"
+            />
+          </svg>
+          Neutral
+        </span>
+        {% endif %}
       </div>
-      <div class="card-body p-0">
-        <ul class="list-group list-group-flush">
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center border-0 py-3"
-          >
-            <span class="text-muted"
-              ><i class="fas fa-newspaper me-2"></i>Source</span
-            >
-            <span class="fw-medium">{{ article.source.name }}</span>
-          </li>
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center border-0 py-3"
-          >
-            <span class="text-muted"
-              ><i class="far fa-calendar me-2"></i>Published</span
-            >
-            <span class="fw-medium"
-              >{{ article.published_at|date:"F d, Y" }}</span
-            >
-          </li>
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center border-0 py-3"
-          >
-            <span class="text-muted"
-              ><i class="fas fa-filter me-2"></i>Sentiment</span
-            >
-            <span
-              class="badge bg-{% if article.sentiment == 'positive' %}positive{% elif article.sentiment == 'negative' %}negative{% else %}neutral{% endif %}"
-            >
-              {% if article.sentiment == 'positive' %}
-              <i class="fas fa-plus-circle me-1"></i>
-              {% elif article.sentiment == 'negative' %}
-              <i class="fas fa-minus-circle me-1"></i>
-              {% else %}
-              <i class="fas fa-dot-circle me-1"></i>
-              {% endif %} {{ article.sentiment|title }}
-            </span>
-          </li>
-          {% if article.category %}
-          <li
-            class="list-group-item d-flex justify-content-between align-items-center border-0 py-3"
-          >
-            <span class="text-muted"
-              ><i class="fas fa-tag me-2"></i>Category</span
-            >
-            <a
-              href="{% url 'core:category_list' article.category.slug %}"
-              class="badge bg-primary-light text-primary text-decoration-none"
-            >
-              {{ article.category.name }}
-            </a>
-          </li>
-          {% endif %}
-        </ul>
+
+      <h1 class="article-title">{{ article.title }}</h1>
+
+      {% if article.category %}
+      <div class="article-category">
+        <a
+          href="{% url 'core:category_list' category_slug=article.category.slug %}"
+          >{{ article.category.name }}</a
+        >
       </div>
+      {% endif %}
     </div>
 
-    <div class="card shadow-sm mb-4">
-      <div class="card-header">
-        <h5 class="mb-0">
-          <i
-            class="fas {% if article.sentiment == 'positive' %}fa-plus-circle text-positive{% elif article.sentiment == 'negative' %}fa-minus-circle text-negative{% else %}fa-dot-circle text-muted{% endif %} me-2"
-          ></i>
-          More {{ article.sentiment|title }} News
-        </h5>
-      </div>
-      <div class="card-body p-0">
-        <div class="list-group list-group-flush">
-          {% for related in related_articles %}
-          <a
-            href="{% url 'core:article_detail' related.slug %}"
-            class="list-group-item list-group-item-action border-0 p-3"
+    {% if article.image_url %}
+    <div class="article-image">
+      <img src="{{ article.image_url }}" alt="{{ article.title }}" />
+    </div>
+    {% endif %}
+
+    <div class="article-content">{{ article.content|safe }}</div>
+
+    <div class="article-actions">
+      <a href="{{ article.url }}" target="_blank" class="btn-primary">
+        Read Original Article
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          fill="currentColor"
+          viewBox="0 0 16 16"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"
+          />
+          <path
+            fill-rule="evenodd"
+            d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"
+          />
+        </svg>
+      </a>
+      <div class="article-share">
+        <button class="btn-share">
+          Share
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            fill="currentColor"
+            viewBox="0 0 16 16"
           >
-            <div class="d-flex w-100 justify-content-between mb-1">
-              <h6 class="mb-1">{{ related.title }}</h6>
-            </div>
-            <div
-              class="d-flex justify-content-between align-items-center small"
-            >
-              <span class="text-muted">{{ related.source.name }}</span>
-              <span class="text-muted"
-                >{{ related.published_at|date:"M d, Y" }}</span
-              >
-            </div>
-          </a>
-          {% empty %}
-          <div class="list-group-item border-0 p-3">
-            <p class="mb-0 text-muted">No related articles found.</p>
-          </div>
-          {% endfor %}
-        </div>
-        {% if related_articles %}
-        <div class="card-footer border-0">
-          <a
-            href="{% url 'core:article_list' %}?sentiment={{ article.sentiment }}"
-            class="btn btn-sm w-100 {% if article.sentiment == 'positive' %}btn-outline-positive{% elif article.sentiment == 'negative' %}btn-outline-negative{% else %}btn-outline-secondary{% endif %}"
-          >
-            View All {{ article.sentiment|title }} News
-          </a>
-        </div>
-        {% endif %}
+            <path
+              d="M13.5 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5zm-8.5 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm11 5.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"
+            />
+          </svg>
+        </button>
       </div>
+    </div>
+  </div>
+
+  <div class="article-sidebar">
+    <div class="sentiment-explanation">
+      <h3>About this article's sentiment</h3>
+      {% if article.sentiment == 'positive' %}
+      <p>
+        This article has been classified as having a
+        <strong>positive</strong> sentiment. This means it likely contains
+        optimistic, constructive, or uplifting content.
+      </p>
+      {% elif article.sentiment == 'negative' %}
+      <p>
+        This article has been classified as having a
+        <strong>negative</strong> sentiment. This means it may contain
+        concerning, critical, or problematic content.
+      </p>
+      {% else %}
+      <p>
+        This article has been classified as having a
+        <strong>neutral</strong> sentiment. This means it is likely presenting a
+        balanced or objective viewpoint without strong positive or negative
+        bias.
+      </p>
+      {% endif %}
+    </div>
+
+    {% if related_articles %}
+    <div class="related-articles">
+      <h3>Related Articles</h3>
+      <ul>
+        {% for related in related_articles %}
+        <li>
+          <a href="{% url 'core:article_detail' slug=related.slug %}">
+            {{ related.title }}
+          </a>
+          <span class="related-date"
+            >{{ related.published_at|date:"M d" }}</span
+          >
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <div class="article-categories-sidebar">
+      <h3>Browse by Category</h3>
+      <ul>
+        {% for category in categories %}
+        <li>
+          <a href="{% url 'core:category_list' category_slug=category.slug %}"
+            >{{ category.name }}</a
+          >
+        </li>
+        {% endfor %}
+      </ul>
     </div>
   </div>
 </div>
-
-<style>
-  @media (min-width: 992px) {
-    .sidebar-info {
-      position: -webkit-sticky;
-      position: sticky;
-      top: 100px;
-      z-index: 10;
-      max-height: calc(100vh - 120px);
-      overflow-y: auto;
-    }
-  }
-
-  .alert-light {
-    background-color: var(--card-accent);
-    color: var(--text-muted);
-    border-left: 3px solid var(--primary);
-  }
-
-  .card-footer {
-    background-color: var(--card-bg);
-  }
-</style>
 {% endblock %}

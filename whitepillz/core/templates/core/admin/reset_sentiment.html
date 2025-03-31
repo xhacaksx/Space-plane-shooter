@@ -1,0 +1,107 @@
+{% extends "admin/base_site.html" %} {% load static %} {% block content %}
+<div class="container py-4">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="m-0">Reset Article Sentiments</h3>
+    </div>
+    <div class="card-body">
+      <div class="alert alert-info">
+        <p>
+          This tool allows you to reset the sentiment of articles to 'pending',
+          making them available for reanalysis.
+        </p>
+        <p>
+          Use the filters below to select which articles to reset. The changes
+          are permanent and cannot be undone.
+        </p>
+      </div>
+
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <div class="card bg-success bg-opacity-10 h-100">
+            <div class="card-body text-center">
+              <h4 class="display-4">{{ sentiment_counts.positive }}</h4>
+              <p class="text-success">Positive Articles</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card bg-danger bg-opacity-10 h-100">
+            <div class="card-body text-center">
+              <h4 class="display-4">{{ sentiment_counts.negative }}</h4>
+              <p class="text-danger">Negative Articles</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card bg-info bg-opacity-10 h-100">
+            <div class="card-body text-center">
+              <h4 class="display-4">{{ sentiment_counts.neutral }}</h4>
+              <p class="text-info">Neutral Articles</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card bg-secondary bg-opacity-10 h-100">
+            <div class="card-body text-center">
+              <h4 class="display-4">{{ sentiment_counts.pending }}</h4>
+              <p class="text-secondary">Pending Articles</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <form method="post" class="mt-4">
+        {% csrf_token %}
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="sentiment" class="form-label">Sentiment to Reset</label>
+            <select name="sentiment" id="sentiment" class="form-select">
+              <option value="">All Sentiment Types</option>
+              <option value="positive">Positive Only</option>
+              <option value="negative">Negative Only</option>
+              <option value="neutral">Neutral Only</option>
+            </select>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="source" class="form-label">Source</label>
+            <select name="source" id="source" class="form-select">
+              <option value="">All Sources</option>
+              {% for source in sources %}
+              <option value="{{ source.id }}">{{ source.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label for="category" class="form-label">Category</label>
+            <select name="category" id="category" class="form-select">
+              <option value="">All Categories</option>
+              {% for category in categories %}
+              <option value="{{ category.id }}">{{ category.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+          <a
+            href="{% url 'admin:core_article_changelist' %}"
+            class="btn btn-secondary"
+            >Cancel</a
+          >
+          <button
+            type="submit"
+            class="btn btn-danger"
+            onclick="return confirm('Are you sure you want to reset the sentiment of the selected articles? This action cannot be undone.')"
+          >
+            Reset Selected Articles
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

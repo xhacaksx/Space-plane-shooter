@@ -1,7 +1,13 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, DetailView
+from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
+from django.http import JsonResponse
+from django.core.management import call_command
 from .models import Article, Category, Source
 import logging
+import io
+import sys
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -44,8 +50,12 @@ class ArticleDetailView(DetailView):
             id=article.id
         ).order_by('-published_at')[:5]
         
+        # Add all categories for sidebar navigation
+        categories = Category.objects.all()
+        
         context['title'] = self.object.title
         context['related_articles'] = related_articles
+        context['categories'] = categories
         return context
 
 class ArticleListView(ListView):
@@ -171,3 +181,128 @@ def search_view(request):
     }
     
     return render(request, 'core/search_results.html', context)
+
+@staff_member_required
+def reset_sentiment_view(request):
+    """View for admin users to reset article sentiments"""
+    if request.method == 'POST':
+        sentiment = request.POST.get('sentiment')
+        source_id = request.POST.get('source')
+        category_id = request.POST.get('category')
+        
+        # Start with all articles
+        articles = Article.objects.all()
+        
+        # Apply filters
+        if sentiment and sentiment in ['positive', 'negative', 'neutral']:
+            articles = articles.filter(sentiment=sentiment)
+            
+        if source_id:
+            try:
+                articles = articles.filter(source_id=int(source_id))
+            except ValueError:
+                pass
+                
+        if category_id:
+            try:
+                articles = articles.filter(category_id=int(category_id))
+            except ValueError:
+                pass
+        
+        # Exclude already pending articles
+        articles = articles.exclude(sentiment='pending')
+        
+        # Get count before updating
+        count = articles.count()
+        
+        # Reset to pending
+        articles.update(sentiment='pending')
+        
+        messages.success(request, f'Successfully reset {count} articles to pending. They are ready for reanalysis.')
+        return redirect('admin:core_article_changelist')
+        
+    # GET request - show form
+    sources = Source.objects.filter(is_active=True)
+    categories = Category.objects.all()
+    sentiment_counts = {
+        'positive': Article.objects.filter(sentiment='positive').count(),
+        'negative': Article.objects.filter(sentiment='negative').count(),
+        'neutral': Article.objects.filter(sentiment='neutral').count(),
+        'pending': Article.objects.filter(sentiment='pending').count(),
+    }
+    
+    context = {
+        'sources': sources,
+        'categories': categories,
+        'sentiment_counts': sentiment_counts,
+        'title': 'Reset Article Sentiments'
+    }
+    
+    return render(request, 'core/admin/reset_sentiment.html', context)
+
+
+def sentiment_stats_api(request):
+    """API endpoint to get sentiment statistics"""
+    stats = {
+        'positive': Article.objects.filter(sentiment='positive').count(),
+        'negative': Article.objects.filter(sentiment='negative').count(),
+        'neutral': Article.objects.filter(sentiment='neutral').count(),
+        'pending': Article.objects.filter(sentiment='pending').count(),
+        'total': Article.objects.count(),
+    }
+    
+    # Add percentages
+    total = stats['total']
+    if total > 0:
+        stats['positive_pct'] = round((stats['positive'] / total) * 100)
+        stats['negative_pct'] = round((stats['negative'] / total) * 100)
+        stats['neutral_pct'] = round((stats['neutral'] / total) * 100)
+        stats['pending_pct'] = round((stats['pending'] / total) * 100)
+    else:
+        stats['positive_pct'] = 0
+        stats['negative_pct'] = 0
+        stats['neutral_pct'] = 0
+        stats['pending_pct'] = 0
+        
+    return JsonResponse(stats)
+
+@staff_member_required
+def run_sentiment_analysis(request):
+    """Run sentiment analysis from the admin interface"""
+    if request.method == 'POST':
+        # Capture output
+        output_buffer = io.StringIO()
+        error_buffer = io.StringIO()
+        
+        # Redirect stdout and stderr
+        sys.stdout = output_buffer
+        sys.stderr = error_buffer
+        
+        try:
+            # Run the command
+            call_command('analyze_sentiment')
+            
+            # Get the outputs
+            output = output_buffer.getvalue()
+            errors = error_buffer.getvalue()
+            
+            # Log the outputs
+            logger.info(f"Sentiment analysis output: {output}")
+            if errors:
+                logger.error(f"Sentiment analysis errors: {errors}")
+            
+            messages.success(request, f'Sentiment analysis completed successfully. Check the logs for details.')
+            
+        except Exception as e:
+            logger.exception("Error running sentiment analysis")
+            messages.error(request, f'Error running sentiment analysis: {str(e)}')
+            
+        finally:
+            # Reset stdout and stderr
+            sys.stdout = sys.__stdout__
+            sys.stderr = sys.__stderr__
+        
+        return redirect('admin:index')
+        
+    # GET request - redirect to admin
+    return redirect('admin:index')

@@ -1,0 +1,199 @@
+{% extends "admin/index.html" %} {% load static %} {% block content %}
+<style>
+  .stats-container {
+    margin-bottom: 20px;
+    background: #1a1a1a;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  }
+  .stats-title {
+    font-size: 1.2em;
+    margin-bottom: 15px;
+    color: #fff;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+  }
+  .stat-card {
+    padding: 15px;
+    border-radius: 6px;
+    text-align: center;
+    color: white;
+  }
+  .stat-card.positive {
+    background: #2c6e49;
+  }
+  .stat-card.negative {
+    background: #9e2a2b;
+  }
+  .stat-card.neutral {
+    background: #0077b6;
+  }
+  .stat-card.pending {
+    background: #595959;
+  }
+  .stat-card.total {
+    background: #212121;
+    grid-column: 1 / -1;
+  }
+  .stat-number {
+    font-size: 2.5em;
+    font-weight: bold;
+    margin: 5px 0;
+  }
+  .stat-label {
+    text-transform: uppercase;
+    font-size: 0.9em;
+    letter-spacing: 1px;
+  }
+  .chart-container {
+    height: 250px;
+    margin-top: 20px;
+  }
+  .tools-container {
+    margin-bottom: 20px;
+    background: #1a1a1a;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  }
+  .tools-title {
+    font-size: 1.2em;
+    margin-bottom: 15px;
+    color: #fff;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+  }
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+  }
+  .tool-card {
+    background: #333;
+    padding: 20px;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .tool-card h3 {
+    margin: 0;
+    font-size: 1.1em;
+    color: white;
+  }
+  .tool-card p {
+    color: #bbb;
+    font-size: 0.9em;
+    margin: 0;
+    flex-grow: 1;
+  }
+  .tool-card a {
+    display: inline-block;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 500;
+    text-align: center;
+  }
+  .tool-card a:hover {
+    background: linear-gradient(135deg, #4338ca, #6d28d9);
+  }
+</style>
+
+<div class="stats-container">
+  <h2 class="stats-title">Article Sentiment Dashboard</h2>
+
+  <div class="stats-grid">
+    <div class="stat-card positive">
+      <div class="stat-number">{{ positive_count }}</div>
+      <div class="stat-label">Positive</div>
+    </div>
+    <div class="stat-card negative">
+      <div class="stat-number">{{ negative_count }}</div>
+      <div class="stat-label">Negative</div>
+    </div>
+    <div class="stat-card neutral">
+      <div class="stat-number">{{ neutral_count }}</div>
+      <div class="stat-label">Neutral</div>
+    </div>
+    <div class="stat-card pending">
+      <div class="stat-number">{{ pending_count }}</div>
+      <div class="stat-label">Pending</div>
+    </div>
+    <div class="stat-card total">
+      <div class="stat-number">{{ total_count }}</div>
+      <div class="stat-label">Total Articles</div>
+    </div>
+  </div>
+</div>
+
+<div class="tools-container">
+  <h2 class="tools-title">Sentiment Management Tools</h2>
+
+  <div class="tools-grid">
+    <div class="tool-card">
+      <h3>Reset Article Sentiments</h3>
+      <p>
+        Mark articles as 'pending' for reanalysis. You can filter by current
+        sentiment, category, or source.
+      </p>
+      <a href="{% url 'core:reset_sentiment' %}">Reset Sentiments</a>
+    </div>
+
+    <div class="tool-card">
+      <h3>Run Sentiment Analysis</h3>
+      <p>
+        Run sentiment analysis on pending articles using the TextBlob library.
+        This will classify all pending articles.
+      </p>
+      <a href="#" onclick="runSentimentAnalysis(event)">Run Analysis</a>
+    </div>
+
+    <div class="tool-card">
+      <h3>View Keywords Configuration</h3>
+      <p>
+        Review and edit the keywords used for sentiment categorization to
+        improve sentiment accuracy.
+      </p>
+      <a href="{% url 'admin:feed_fetcher_sentimentkeyword_changelist' %}"
+        >Manage Keywords</a
+      >
+    </div>
+  </div>
+</div>
+
+<script>
+  function runSentimentAnalysis(event) {
+    event.preventDefault();
+    if (confirm("Run sentiment analysis on all pending articles?")) {
+      // Create a form to submit
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = '{% url "core:run_sentiment_analysis" %}';
+
+      // Add CSRF token
+      const csrfInput = document.createElement("input");
+      csrfInput.type = "hidden";
+      csrfInput.name = "csrfmiddlewaretoken";
+      csrfInput.value = document.querySelector(
+        "[name=csrfmiddlewaretoken]"
+      ).value;
+      form.appendChild(csrfInput);
+
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
+</script>
+
+{{ block.super }} {% endblock %}
